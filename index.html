@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GLOW — книжный каталог. Находи книги, знакомься с описаниями и смотри цены.">
+  <meta name="theme-color" content="#f5f5f7">
+  <title>GLOW — книжный каталог</title>
+  <style>
+    :root{--bg:#f5f5f7;--card:#fff;--text:#1d1d1f;--muted:#77777d;--blue:#0878f9;--line:#e7e7eb}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .nav{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 max(22px,calc((100% - 1180px)/2));background:rgba(255,255,255,.82);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    .logo{font-size:25px;font-weight:800;letter-spacing:3px}.navlinks{display:flex;gap:25px;font-size:14px;color:#424247}
+    .hero{max-width:1180px;margin:auto;padding:82px 24px 54px;text-align:center}
+    .eyebrow{font-size:13px;color:var(--blue);font-weight:700;letter-spacing:2px;text-transform:uppercase}
+    h1{font-size:clamp(44px,8vw,82px);letter-spacing:-4px;line-height:1.02;margin:16px 0}
+    .hero p{font-size:19px;color:var(--muted);max-width:650px;margin:0 auto 28px;line-height:1.6}
+    .hero-btn{display:inline-block;background:var(--blue);color:#fff;padding:13px 23px;border-radius:999px;font-weight:600}
+    .wrap{max-width:1180px;margin:auto;padding:0 24px 70px}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:15px 0 22px}
+    h2{font-size:34px;letter-spacing:-1.3px;margin:0}.count{color:var(--muted);font-size:14px}
+    .toolbar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+    input,select{font:inherit;border:1px solid var(--line);background:#fff;border-radius:13px;padding:13px 15px;outline:none}
+    input{flex:1;min-width:220px}select{min-width:190px}
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0878f91a}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+    .book{background:var(--card);border:1px solid #ededf0;border-radius:19px;padding:14px;display:flex;flex-direction:column;min-width:0;transition:transform .2s,box-shadow .2s}
+    .book:hover{transform:translateY(-4px);box-shadow:0 12px 32px #17171b12}
+    .cover{height:220px;width:100%;border-radius:12px;background:linear-gradient(145deg,#dce8f7,#f4e9df);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px}
+    .cover img{width:100%;height:100%;object-fit:contain;background:#f2f2f4}
+    .cover-fallback{padding:18px;text-align:center;color:#34343a;font-weight:700;font-family:Georgia,serif;font-size:19px;line-height:1.3}
+    .tag{font-size:11px;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+    .book h3{font-size:17px;line-height:1.35;margin:8px 0 5px}
+    .author{font-size:13px;color:var(--muted);min-height:34px}
+    .desc{font-size:13px;color:#626269;line-height:1.5;margin:10px 0 15px;flex:1}
+    .bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
+    .price{font-weight:750;font-size:17px;white-space:nowrap}
+    .details{border:0;background:#eef5ff;color:var(--blue);padding:9px 12px;border-radius:999px;font-weight:650;cursor:pointer}
+    .empty{grid-column:1/-1;text-align:center;padding:55px 10px;color:var(--muted)}
+    .info{background:#fff;border:1px solid var(--line);border-radius:22px;padding:30px;margin-top:58px;display:grid;grid-template-columns:1.2fr 1fr;gap:28px}
+    .info h2{font-size:28px;margin-bottom:12px}.info p{color:var(--muted);line-height:1.65;margin:0}
+    .info-note{background:#f5f8ff;border-radius:16px;padding:18px;color:#42516a;line-height:1.6;font-size:14px}
+    footer{text-align:center;color:#888;font-size:13px;padding:30px 20px 45px}
+    .modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px;z-index:30}
+    .modal.show{display:flex}.modal-card{background:white;border-radius:20px;max-width:460px;width:100%;padding:25px;position:relative}
+    .close{position:absolute;right:16px;top:12px;border:0;background:#f1f1f3;border-radius:50%;width:34px;height:34px;font-size:20px;cursor:pointer}
+    .modal-card h3{font-size:24px;margin:8px 35px 8px 0}.modal-card p{color:#65656c;line-height:1.6}
+    .modal-price{font-size:22px;font-weight:800;margin:18px 0}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media(max-width:650px){.nav{padding:0 17px}.navlinks{gap:13px;font-size:12px}.hero{padding:58px 20px 40px}h1{letter-spacing:-2px}.hero p{font-size:16px}.wrap{padding:0 15px 45px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.book{padding:10px;border-radius:15px}.cover{height:180px}.book h3{font-size:15px}.desc{font-size:12px}.price{font-size:15px}.details{font-size:12px;padding:8px}.info{grid-template-columns:1fr;padding:22px}}
+    @media(max-width:380px){.grid{grid-template-columns:1fr}.cover{height:230px}}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="logo" href="#">GLOW</a>
+    <div class="navlinks"><a href="#catalog">Каталог</a><a href="#about">О проекте</a><a href="#store">Как купить</a></div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Твоя следующая история начинается здесь</div>
+    <h1>Найди свою<br>следующую книгу.</h1>
+    <p>Каталог GLOW — место, где можно открыть новые истории, выбрать интересную книгу и узнать её стоимость.</p>
+    <a class="hero-btn" href="#catalog">Смотреть каталог</a>
+  </header>
+
+  <main class="wrap" id="catalog">
+    <div class="section-head">
+      <div><div class="eyebrow">Подборка GLOW</div><h2>Книги</h2></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Поиск по названию или автору...">
+      <select id="category"><option value="all">Все категории</option></select>
+      <select id="sort"><option value="default">Сначала популярные</option><option value="cheap">Сначала дешевле</option><option value="expensive">Сначала дороже</option><option value="az">По названию А–Я</option></select>
+    </div>
+    <div class="grid" id="books"></div>
+
+    <section class="info" id="about">
+      <div><div class="eyebrow">О GLOW</div><h2>Больше, чем просто каталог.</h2><p>GLOW — демонстрационный книжный проект. Здесь можно искать книги, читать краткие описания, смотреть обложки и сравнивать цены. Проект создан как пример современного и удобного сайта.</p></div>
+      <div class="info-note">Обложки загружаются из открытого каталога Google Books. Если для книги не найдётся изображение, появится аккуратная текстовая обложка. Цены в каталоге примерные и не являются подтверждением наличия товара.</div>
+    </section>
+
+    <section class="info" id="store">
+      <div><div class="eyebrow">Покупка</div><h2>Как купить книгу?</h2><p>Этот сайт пока является онлайн-каталогом и учебным проектом. Заказы, оплата и доставка ещё не подключены.</p></div>
+      <div class="info-note"><b>Информация для посетителей</b><br>Чтобы превратить каталог в настоящий магазин, нужно добавить реальные контакты продавца, подтверждение наличия книг и безопасный способ оформления заказов. Не указывайте здесь личные данные, пока сайт демонстрационный.</div>
+    </section>
+  </main>
+
+  <footer>© 2026 GLOW. Книжный каталог.</footer>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button class="close" id="close" aria-label="Закрыть">×</button>
+      <div class="tag" id="modalCategory"></div>
+      <h3 id="modalTitle"></h3>
+      <div class="author" id="modalAuthor"></div>
+      <p id="modalDesc"></p>
+      <div class="modal-price" id="modalPrice"></div>
+      <div class="info-note">Каталог демонстрационный. Наличие книги и возможность покупки пока не подтверждены.</div>
+    </div>
+  </div>
+
+  <script>
+    const books = [
+  {
+    "title": "Маленький принц",
+    "author": "Антуан де Сент-Экзюпери",
+    "category": "Классика",
+    "price": 350
+  },
+  {
+    "title": "Алхимик",
+    "author": "Пауло Коэльо",
+    "category": "Роман",
+    "price": 420
+  },
+  {
+    "title": "1984",
+    "author": "Джордж Оруэлл",
+    "category": "Фантастика",
+    "price": 490
+  },
+  {
+    "title": "Скотный двор",
+    "author": "Джордж Оруэлл",
+    "category": "Классика",
+    "price": 390
+  },
+  {
+    "title": "Мастер и Маргарита",
+    "author": "Михаил Булгаков",
+    "category": "Классика",
+    "price": 550
+  },
+  {
+    "title": "Преступление и наказание",
+    "author": "Фёдор Достоевский",
+    "category": "Классика",
+    "price": 620
+  },
+  {
+    "title": "Идиот",
+    "author": "Фёдор Достоевский",
+    "category": "Классика",
+    "price": 590
+  },
+  {
+    "title": "Отцы и дети",
+    "author": "Иван Тургенев",
+    "category": "Классика",
+    "price": 420
+  },
+  {
+    "title": "Герой нашего времени",
+    "author": "Михаил Лермонтов",
+    "category": "Классика",
+    "price": 390
+  },
+  {
+    "title": "Капитанская дочка",
+    "author": "Александр Пушкин",
+    "category": "Классика",
+    "price": 350
+  },
+  {
+    "title": "Евгений Онегин",
+    "author": "Александр Пушкин",
+    "category": "Классика",
+    "price": 390
+  },
+  {
+    "title": "Война и мир",
+    "author": "Лев Толстой",
+    "category": "Классика",
+    "price": 890
+  },
+  {
+    "title": "Анна Каренина",
+    "author": "Лев Толстой",
+    "category": "Классика",
+    "price": 750
+  },
+  {
+    "title": "Воскресение",
+    "author": "Лев Толстой",
+    "category": "Классика",
+    "price": 520
+  },
+  {
+    "title": "Мёртвые души",
+    "author": "Николай Гоголь",
+    "category": "Классика",
+    "price": 450
+  },
+  {
+    "title": "Ревизор",
+    "author": "Николай Гоголь",
+    "category": "Классика",
+    "price": 320
+  },
+  {
+    "title": "Шинель",
+    "author": "Николай Гоголь",
+    "category": "Классика",
+    "price": 290
+  },
+  {
+    "title": "Горе от ума",
+    "author": "Александр Грибоедов",
+    "category": "Классика",
+    "price": 300
+  },
+  {
+    "title": "Тихий Дон",
+    "author": "Михаил Шолохов",
+    "category": "Классика",
+    "price": 790
+  },
+  {
+    "title": "Доктор Живаго",
+    "author": "Борис Пастернак",
+    "category": "Роман",
+    "price": 650
+  },
+  {
+    "title": "Сто лет одиночества",
+    "author": "Габриэль Гарсиа Маркес",
+    "category": "Роман",
+    "price": 590
+  },
+  {
+    "title": "Любовь во время чумы",
+    "author": "Габриэль Гарсиа Маркес",
+    "category": "Роман",
+    "price": 560
+  },
+  {
+    "title": "Над пропастью во ржи",
+    "author": "Джером Сэлинджер",
+    "category": "Роман",
+    "price": 470
+  },
+  {
+    "title": "Убить пересмешника",
+    "author": "Харпер Ли",
+    "category": "Роман",
+    "price": 490
+  },
+  {
+    "title": "Великий Гэтсби",
+    "author": "Фрэнсис Скотт Фицджеральд",
+    "category": "Классика",
+    "price": 420
+  },
+  {
+    "title": "451 градус по Фаренгейту",
+    "author": "Рэй Брэдбери",
+    "category": "Фантастика",
+    "price": 450
+  },
+  {
+    "title": "Марсианские хроники",
+    "author": "Рэй Брэдбери",
+    "category": "Фантастика",
+    "price": 480
+  },
+  {
+    "title": "Дюна",
+    "author": "Фрэнк Герберт",
+    "category": "Фантастика",
+    "price": 690
+  },
+  {
+    "title": "Цветы для Элджернона",
+    "author": "Дэниел Киз",
+    "category": "Фантастика",
+    "price": 490
+  },
+  {
+    "title": "О дивный новый мир",
+    "author": "Олдос Хаксли",
+    "category": "Фантастика",
+    "price": 460
+  },
+  {
+    "title": "Повелитель мух",
+    "author": "Уильям Голдинг",
+    "category": "Роман",
+    "price": 430
+  },
+  {
+    "title": "Портрет Дориана Грея",
+    "author": "Оскар Уайльд",
+    "category": "Классика",
+    "price": 440
+  },
+  {
+    "title": "Граф Монте-Кристо",
+    "author": "Александр Дюма",
+    "category": "Приключения",
+    "price": 690
+  },
+  {
+    "title": "Три мушкетёра",
+    "author": "Александр Дюма",
+    "category": "Приключения",
+    "price": 620
+  },
+  {
+    "title": "Двадцать тысяч лье под водой",
+    "author": "Жюль Верн",
+    "category": "Приключения",
+    "price": 490
+  },
+  {
+    "title": "Таинственный остров",
+    "author": "Жюль Верн",
+    "category": "Приключения",
+    "price": 520
+  },
+  {
+    "title": "Вокруг света за 80 дней",
+    "author": "Жюль Верн",
+    "category": "Приключения",
+    "price": 430
+  },
+  {
+    "title": "Приключения Тома Сойера",
+    "author": "Марк Твен",
+    "category": "Приключения",
+    "price": 390
+  },
+  {
+    "title": "Приключения Гекльберри Финна",
+    "author": "Марк Твен",
+    "category": "Приключения",
+    "price": 420
+  },
+  {
+    "title": "Остров сокровищ",
+    "author": "Роберт Льюис Стивенсон",
+    "category": "Приключения",
+    "price": 390
+  },
+  {
+    "title": "Робинзон Крузо",
+    "author": "Даниэль Дефо",
+    "category": "Приключения",
+    "price": 420
+  },
+  {
+    "title": "Шерлок Холмс: Этюд в багровых тонах",
+    "author": "Артур Конан Дойл",
+    "category": "Детектив",
+    "price": 390
+  },
+  {
+    "title": "Собака Баскервилей",
+    "author": "Артур Конан Дойл",
+    "category": "Детектив",
+    "price": 420
+  },
+  {
+    "title": "Убийство в Восточном экспрессе",
+    "author": "Агата Кристи",
+    "category": "Детектив",
+    "price": 450
+  },
+  {
+    "title": "Десять негритят",
+    "author": "Агата Кристи",
+    "category": "Детектив",
+    "price": 430
+  },
+  {
+    "title": "Убийство Роджера Экройда",
+    "author": "Агата Кристи",
+    "category": "Детектив",
+    "price": 450
+  },
+  {
+    "title": "Девушка с татуировкой дракона",
+    "author": "Стиг Ларссон",
+    "category": "Детектив",
+    "price": 590
+  },
+  {
+    "title": "Имя розы",
+    "author": "Умберто Эко",
+    "category": "Детектив",
+    "price": 620
+  },
+  {
+    "title": "Гарри Поттер и философский камень",
+    "author": "Дж. К. Роулинг",
+    "category": "Фэнтези",
+    "price": 650
+  },
+  {
+    "title": "Гарри Поттер и Тайная комната",
+    "author": "Дж. К. Роулинг",
+    "category": "Фэнтези",
+    "price": 650
+  },
+  {
+    "title": "Гарри Поттер и узник Азкабана",
+    "author": "Дж. К. Роулинг",
+    "category": "Фэнтези",
+    "price": 690
+  },
+  {
+    "title": "Гарри Поттер и Кубок огня",
+    "author": "Дж. К. Роулинг",
+    "category": "Фэнтези",
+    "price": 750
+  },
+  {
+    "title": "Хоббит",
+    "author": "Джон Рональд Руэл Толкин",
+    "category": "Фэнтези",
+    "price": 590
+  },
+  {
+    "title": "Властелин колец: Братство кольца",
+    "author": "Джон Рональд Руэл Толкин",
+    "category": "Фэнтези",
+    "price": 720
+  },
+  {
+    "title": "Властелин колец: Две крепости",
+    "author": "Джон Рональд Руэл Толкин",
+    "category": "Фэнтези",
+    "price": 720
+  },
+  {
+    "title": "Властелин колец: Возвращение короля",
+    "author": "Джон Рональд Руэл Толкин",
+    "category": "Фэнтези",
+    "price": 750
+  },
+  {
+    "title": "Хроники Нарнии: Лев, колдунья и платяной шкаф",
+    "author": "Клайв Стейплз Льюис",
+    "category": "Фэнтези",
+    "price": 490
+  },
+  {
+    "title": "Игра престолов",
+    "author": "Джордж Р. Р. Мартин",
+    "category": "Фэнтези",
+    "price": 790
+  },
+  {
+    "title": "Имя ветра",
+    "author": "Патрик Ротфусс",
+    "category": "Фэнтези",
+    "price": 690
+  },
+  {
+    "title": "Ведьмак: Последнее желание",
+    "author": "Анджей Сапковский",
+    "category": "Фэнтези",
+    "price": 620
+  },
+  {
+    "title": "Ведьмак: Меч предназначения",
+    "author": "Анджей Сапковский",
+    "category": "Фэнтези",
+    "price": 620
+  },
+  {
+    "title": "Маленькие женщины",
+    "author": "Луиза Мэй Олкотт",
+    "category": "Роман",
+    "price": 490
+  },
+  {
+    "title": "Джейн Эйр",
+    "author": "Шарлотта Бронте",
+    "category": "Роман",
+    "price": 520
+  },
+  {
+    "title": "Грозовой перевал",
+    "author": "Эмили Бронте",
+    "category": "Роман",
+    "price": 480
+  },
+  {
+    "title": "Гордость и предубеждение",
+    "author": "Джейн Остин",
+    "category": "Роман",
+    "price": 450
+  },
+  {
+    "title": "Разум и чувства",
+    "author": "Джейн Остин",
+    "category": "Роман",
+    "price": 450
+  },
+  {
+    "title": "Дракула",
+    "author": "Брэм Стокер",
+    "category": "Мистика",
+    "price": 490
+  },
+  {
+    "title": "Франкенштейн",
+    "author": "Мэри Шелли",
+    "category": "Мистика",
+    "price": 430
+  },
+  {
+    "title": "Оно",
+    "author": "Стивен Кинг",
+    "category": "Мистика",
+    "price": 790
+  },
+  {
+    "title": "Зелёная миля",
+    "author": "Стивен Кинг",
+    "category": "Роман",
+    "price": 620
+  },
+  {
+    "title": "Сияние",
+    "author": "Стивен Кинг",
+    "category": "Мистика",
+    "price": 590
+  },
+  {
+    "title": "Кладбище домашних животных",
+    "author": "Стивен Кинг",
+    "category": "Мистика",
+    "price": 590
+  },
+  {
+    "title": "Человек-невидимка",
+    "author": "Герберт Уэллс",
+    "category": "Фантастика",
+    "price": 390
+  },
+  {
+    "title": "Машина времени",
+    "author": "Герберт Уэллс",
+    "category": "Фантастика",
+    "price": 350
+  },
+  {
+    "title": "Война миров",
+    "author": "Герберт Уэллс",
+    "category": "Фантастика",
+    "price": 420
+  },
+  {
+    "title": "Психология влияния",
+    "author": "Роберт Чалдини",
+    "category": "Саморазвитие",
+    "price": 690
+  },
+  {
+    "title": "Думай медленно… решай быстро",
+    "author": "Даниэль Канеман",
+    "category": "Саморазвитие",
+    "price": 790
+  },
+  {
+    "title": "Атомные привычки",
+    "author": "Джеймс Клир",
+    "category": "Саморазвитие",
+    "price": 750
+  },
+  {
+    "title": "Сила привычки",
+    "author": "Чарлз Дахигг",
+    "category": "Саморазвитие",
+    "price": 650
+  },
+  {
+    "title": "Самый богатый человек в Вавилоне",
+    "author": "Джордж Клейсон",
+    "category": "Бизнес",
+    "price": 390
+  },
+  {
+    "title": "Богатый папа, бедный папа",
+    "author": "Роберт Кийосаки",
+    "category": "Бизнес",
+    "price": 590
+  },
+  {
+    "title": "Думай и богатей",
+    "author": "Наполеон Хилл",
+    "category": "Бизнес",
+    "price": 450
+  },
+  {
+    "title": "7 навыков высокоэффективных людей",
+    "author": "Стивен Кови",
+    "category": "Саморазвитие",
+    "price": 690
+  },
+  {
+    "title": "Как завоёвывать друзей и оказывать влияние на людей",
+    "author": "Дейл Карнеги",
+    "category": "Саморазвитие",
+    "price": 490
+  },
+  {
+    "title": "Начни с почему",
+    "author": "Саймон Синек",
+    "category": "Бизнес",
+    "price": 590
+  },
+  {
+    "title": "От хорошего к великому",
+    "author": "Джим Коллинз",
+    "category": "Бизнес",
+    "price": 690
+  },
+  {
+    "title": "Эссенциализм",
+    "author": "Грег МакКеон",
+    "category": "Саморазвитие",
+    "price": 590
+  },
+  {
+    "title": "Глубокая работа",
+    "author": "Кэл Ньюпорт",
+    "category": "Саморазвитие",
+    "price": 620
+  },
+  {
+    "title": "Не заставляйте меня думать",
+    "author": "Стив Круг",
+    "category": "Программирование",
+    "price": 590
+  },
+  {
+    "title": "Чистый код",
+    "author": "Роберт Мартин",
+    "category": "Программирование",
+    "price": 990
+  },
+  {
+    "title": "Совершенный код",
+    "author": "Стив Макконнелл",
+    "category": "Программирование",
+    "price": 1190
+  },
+  {
+    "title": "Грокаем алгоритмы",
+    "author": "Адитья Бхаргава",
+    "category": "Программирование",
+    "price": 690
+  },
+  {
+    "title": "Python. К вершинам мастерства",
+    "author": "Лучано Рамальо",
+    "category": "Программирование",
+    "price": 1190
+  },
+  {
+    "title": "Изучаем Python",
+    "author": "Марк Лутц",
+    "category": "Программирование",
+    "price": 1290
+  },
+  {
+    "title": "JavaScript. Подробное руководство",
+    "author": "Дэвид Флэнаган",
+    "category": "Программирование",
+    "price": 1090
+  },
+  {
+    "title": "Программист-прагматик",
+    "author": "Эндрю Хант, Дэвид Томас",
+    "category": "Программирование",
+    "price": 890
+  },
+  {
+    "title": "Алгоритмы. Построение и анализ",
+    "author": "Томас Кормен и др.",
+    "category": "Программирование",
+    "price": 1490
+  },
+  {
+    "title": "Краткая история времени",
+    "author": "Стивен Хокинг",
+    "category": "Наука",
+    "price": 590
+  },
+  {
+    "title": "Космос",
+    "author": "Карл Саган",
+    "category": "Наука",
+    "price": 650
+  },
+  {
+    "title": "Эгоистичный ген",
+    "author": "Ричард Докинз",
+    "category": "Наука",
+    "price": 690
+  }
+];
+    const descriptions = {
+      "Классика":"Известное произведение мировой литературы, к которому читатели возвращаются благодаря ярким героям и важным темам.",
+      "Роман":"История о людях, отношениях и жизненном выборе. Книга подойдёт тем, кто любит глубокие сюжеты и характеры.",
+      "Фантастика":"Книга переносит читателя в необычный мир и предлагает задуматься о будущем, технологиях и возможностях человека.",
+      "Приключения":"Захватывающая история о путешествиях, открытиях и неожиданных испытаниях.",
+      "Детектив":"Загадка, подсказки и расследование — история для тех, кто любит строить версии и искать ответы.",
+      "Фэнтези":"Вымышленный мир, необычные существа и большое приключение, в котором героям предстоит сделать важный выбор.",
+      "Мистика":"Таинственная атмосфера и необычные события создают напряжённую историю для любителей загадок.",
+      "Саморазвитие":"Книга с идеями и практическими подходами, которые помогают лучше понимать себя и выстраивать полезные привычки.",
+      "Бизнес":"Материал о предпринимательстве, финансах и принятии решений. Подойдёт тем, кто интересуется деловым миром.",
+      "Программирование":"Книга для знакомства с разработкой программ, алгоритмами и принципами создания цифровых продуктов.",
+      "Наука":"Познавательное чтение о природе, человеке и устройстве окружающего мира.",
+      "Образование":"Книга с подходами и идеями, которые могут помочь в обучении и развитии мышления.",
+      "Кыргызская литература":"Произведение, связанное с культурой, историей и литературным наследием Кыргызстана."
+    };
+
+    const grid = document.getElementById("books");
+    const search = document.getElementById("search");
+    const category = document.getElementById("category");
+    const sort = document.getElementById("sort");
+    const count = document.getElementById("count");
+    const modal = document.getElementById("modal");
+    const money = n => new Intl.NumberFormat("ru-RU").format(n) + " сом";
+
+    [...new Set(books.map(b => b.category))].sort((a,b)=>a.localeCompare(b,"ru")).forEach(cat => {
+      const option = document.createElement("option");
+      option.value = cat; option.textContent = cat; category.appendChild(option);
+    });
+
+    function makeCard(book, index) {
+      const article = document.createElement("article");
+      article.className = "book";
+      const cover = document.createElement("div");
+      cover.className = "cover";
+      const fallback = document.createElement("div");
+      fallback.className = "cover-fallback";
+      fallback.textContent = book.title;
+      cover.appendChild(fallback);
+
+      const tag = document.createElement("div"); tag.className = "tag"; tag.textContent = book.category;
+      const title = document.createElement("h3"); title.textContent = book.title;
+      const author = document.createElement("div"); author.className = "author"; author.textContent = book.author;
+      const desc = document.createElement("p"); desc.className = "desc"; desc.textContent = descriptions[book.category] || "Интересная книга для вашей домашней библиотеки.";
+      const bottom = document.createElement("div"); bottom.className = "bottom";
+      const price = document.createElement("div"); price.className = "price"; price.textContent = money(book.price);
+      const button = document.createElement("button"); button.className = "details"; button.textContent = "Подробнее";
+      button.addEventListener("click", () => showDetails(book));
+      bottom.append(price, button);
+      article.append(cover, tag, title, author, desc, bottom);
+      article.dataset.coverQuery = book.title + " " + book.author;
+      return article;
+    }
+
+    function loadCover(article) {
+      if (article.dataset.coverLoaded) return;
+      article.dataset.coverLoaded = "1";
+      const query = article.dataset.coverQuery;
+      const cover = article.querySelector(".cover");
+      fetch("https://www.googleapis.com/books/v1/volumes?q=" + encodeURIComponent("intitle:" + query) + "&maxResults=1")
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          const item = data.items && data.items[0];
+          const link = item && item.volumeInfo && item.volumeInfo.imageLinks && (item.volumeInfo.imageLinks.thumbnail || item.volumeInfo.imageLinks.smallThumbnail);
+          if (link) {
+            const img = document.createElement("img");
+            img.alt = "Обложка книги " + query;
+            img.loading = "lazy";
+            img.src = link.replace("http://","https://");
+            img.onerror = () => { img.remove(); };
+            cover.replaceChildren(img);
+          }
+        }).catch(() => {});
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { loadCover(entry.target); observer.unobserve(entry.target); }
+      });
+    }, {rootMargin:"250px"});
+
+    function render() {
+      let list = books.filter(b => {
+        const q = search.value.trim().toLowerCase();
+        return (category.value === "all" || b.category === category.value) &&
+          (!q || (b.title + " " + b.author + " " + b.category).toLowerCase().includes(q));
+      });
+      if (sort.value === "cheap") list.sort((a,b)=>a.price-b.price);
+      if (sort.value === "expensive") list.sort((a,b)=>b.price-a.price);
+      if (sort.value === "az") list.sort((a,b)=>a.title.localeCompare(b.title,"ru"));
+      grid.replaceChildren();
+      count.textContent = "Найдено книг: " + list.length;
+      if (!list.length) {
+        const empty = document.createElement("div"); empty.className="empty";
+        empty.textContent="Ничего не найдено. Попробуйте изменить запрос.";
+        grid.appendChild(empty); return;
+      }
+      list.forEach((book, i) => {
+        const card = makeCard(book, i); grid.appendChild(card); observer.observe(card);
+      });
+    }
+
+    function showDetails(book) {
+      document.getElementById("modalCategory").textContent = book.category;
+      document.getElementById("modalTitle").textContent = book.title;
+      document.getElementById("modalAuthor").textContent = book.author;
+      document.getElementById("modalDesc").textContent = descriptions[book.category] || "Интересная книга для вашей домашней библиотеки.";
+      document.getElementById("modalPrice").textContent = money(book.price);
+      modal.classList.add("show");
+    }
+    document.getElementById("close").addEventListener("click",()=>modal.classList.remove("show"));
+    modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("show")});
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")modal.classList.remove("show")});
+    search.addEventListener("input",render);
+    category.addEventListener("change",render);
+    sort.addEventListener("change",render);
+    render();
+  </script>
+</body>
+</html>
